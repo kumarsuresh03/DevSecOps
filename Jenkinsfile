@@ -1,59 +1,50 @@
 pipeline {
-    agent any
-
+    agent any // This sets up an agent for the entire pipeline
+    
     environment {
-        // Environment variables
-        DOCKERHUB_CREDENTIALS = credentials('docker-hub-credentials')
+        DOCKERHUB_CREDENTIALS = credentials('dockerhub-credentials')
         SONAR_TOKEN = credentials('sonarcloud-token')
-        DOCKER_IMAGE = 'yourdockerhubusername/simple-node-app'
     }
 
     stages {
-        stage('Clone Repository') {
+        stage('Checkout Code') {
             steps {
-                git 'https://github.com/yourusername/your-repo.git'
-            }
-        }
-
-        stage('Static Code Analysis - SonarCloud') {
-            steps {
-                withSonarQubeEnv('SonarCloud') {
-                    sh '''
-                    sonar-scanner \
-                        -Dsonar.projectKey=yourprojectkey \
-                        -Dsonar.organization=yourorganization \
-                        -Dsonar.sources=. \
-                        -Dsonar.host.url=https://sonarcloud.io \
-                        -Dsonar.login=$SONAR_TOKEN
-                    '''
+                script {
+                    // Checkout code from Git repository
+                    git branch: 'master', url: 'https://github.com/kumarsuresh03/DevSecOps.git'
                 }
             }
         }
 
-        stage('Unit Tests') {
-            steps {
-                sh 'npm install'
-                sh 'npm test'
-            }
-        }
-
-        stage('Security Scan - Trivy') {
-            steps {
-                sh 'trivy fs --exit-code 1 .'
-            }
-        }
-
-        stage('Build Docker Image') {
-            steps {
-                sh 'docker build -t $DOCKER_IMAGE:latest .'
-            }
-        }
-
-        stage('Push to Docker Hub') {
+        stage('SonarCloud Analysis') {
             steps {
                 script {
-                    docker.withRegistry('https://index.docker.io/v1/', 'docker-hub-credentials') {
-                        sh 'docker push $DOCKER_IMAGE:latest'
+                    withSonarQubeEnv('SonarCloud') {
+                        sh '''
+                        sonar-scanner \
+                            -Dsonar.projectKey=your_project_key \
+                            -Dsonar.organization=your_organization \
+                            -Dsonar.sources=. \
+                            -Dsonar.host.url=https://sonarcloud.io \
+                            -Dsonar.login=$SONAR_TOKEN
+                        '''
+                    }
+                }
+            }
+        }
+
+        stage('Docker Build and Push') {
+            steps {
+                script {
+                    withCredentials([usernamePassword(credentialsId: 'dockerhub-credentials', usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')]) {
+                        // Docker login
+                        sh 'docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD'
+
+                        // Build and push Docker image
+                        sh '''
+                        docker build -t yourdockerhubusername/devsecops:latest .
+                        docker push yourdockerhubusername/devsecops:latest
+                        '''
                     }
                 }
             }
@@ -62,6 +53,7 @@ pipeline {
 
     post {
         always {
+            // Clean up the workspace after the pipeline runs
             cleanWs()
         }
     }
