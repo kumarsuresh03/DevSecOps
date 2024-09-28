@@ -1,35 +1,60 @@
 pipeline {
-    agent any // Use any available agent
-    
+    agent any
+
     environment {
-        SONAR_TOKEN = credentials('sonarcloud-token') // Replace with your SonarCloud token credentials ID
+        // Environment variables
+        DOCKERHUB_CREDENTIALS = credentials('docker-hub-credentials')
+        SONAR_TOKEN = credentials('sonarcloud-token')
+        DOCKER_IMAGE = 'yourdockerhubusername/simple-node-app'
     }
 
     stages {
-        stage('Checkout Code') {
+        stage('Clone Repository') {
             steps {
-                echo "Checking out code from SCM"
-                checkout scm // Use the SCM defined in Jenkins
+                git 'https://github.com/yourusername/your-repo.git'
             }
         }
 
-        stage('SonarCloud Analysis') {
+        stage('Static Code Analysis - SonarCloud') {
             steps {
-                withSonarQubeEnv('SonarCloud') { // 'SonarCloud' is the name you gave in the tool configuration
+                withSonarQubeEnv('SonarCloud') {
                     sh '''
-                        echo "PATH = ${PATH}"
-                        echo "JAVA_HOME = ${JAVA_HOME}"
-                        which sonar-scanner || echo "sonar-scanner not found"
-                        sonar-scanner --version || echo "sonar-scanner version check failed"
-                        
-                        sonar-scanner \
-                        -Dsonar.projectKey=kumarsuresh03_CA3 \
-                        -Dsonar.organization=kumarsuresh03 \
+                    sonar-scanner \
+                        -Dsonar.projectKey=yourprojectkey \
+                        -Dsonar.organization=yourorganization \
                         -Dsonar.sources=. \
                         -Dsonar.host.url=https://sonarcloud.io \
-                        -Dsonar.login=${SONAR_TOKEN} \
-                        -X -e
+                        -Dsonar.login=$SONAR_TOKEN
                     '''
+                }
+            }
+        }
+
+        stage('Unit Tests') {
+            steps {
+                sh 'npm install'
+                sh 'npm test'
+            }
+        }
+
+        stage('Security Scan - Trivy') {
+            steps {
+                sh 'trivy fs --exit-code 1 .'
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                sh 'docker build -t $DOCKER_IMAGE:latest .'
+            }
+        }
+
+        stage('Push to Docker Hub') {
+            steps {
+                script {
+                    docker.withRegistry('https://index.docker.io/v1/', 'DOCKERHUB_CREDENTIALS') {
+                        sh 'docker push $DOCKER_IMAGE:latest'
+                    }
                 }
             }
         }
@@ -37,8 +62,7 @@ pipeline {
 
     post {
         always {
-            echo "Cleaning workspace after the pipeline runs"
-            cleanWs() // Clean workspace after the pipeline runs
+            cleanWs()
         }
     }
 }
