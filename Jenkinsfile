@@ -18,8 +18,8 @@ pipeline {
                     withSonarQubeEnv('SonarCloud') { // Replace 'SonarCloud' with your SonarQube server configuration name
                         sh '''
                         sonar-scanner \
-                            -Dsonar.projectKey=kumarsuresh03_CA3 \  // Replace with your actual project key
-                            -Dsonar.organization=kumarsuresh03 \ // Replace with your actual organization
+                            -Dsonar.projectKey=kumarsuresh03_CA3 \  
+                            -Dsonar.organization=kumarsuresh03 \ 
                             -Dsonar.sources=. \
                             -Dsonar.host.url=https://sonarcloud.io \
                             -Dsonar.login=$SONAR_TOKEN
