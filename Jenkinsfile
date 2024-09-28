@@ -12,19 +12,17 @@ pipeline {
             }
         }
 
-        stage('SonarCloud Analysis') {
+       stage('SonarCloud Analysis') {
             steps {
-                script {
-                    withSonarQubeEnv('SonarCloud') { // Replace 'SonarCloud' with your SonarQube server configuration name
-                        sh '''
+                withSonarQubeEnv('SonarCloud') {
+                    sh """
                         sonar-scanner \
-                            -Dsonar.projectKey=kumarsuresh03_CA3 \  
-                            -Dsonar.organization=kumarsuresh03 \ 
-                            -Dsonar.sources=. \
-                            -Dsonar.host.url=https://sonarcloud.io \
-                            -Dsonar.login=$SONAR_TOKEN
-                        '''
-                    }
+                        -Dsonar.projectKey=kumarsuresh03_CA3 \
+                        -Dsonar.organization=kumarsuresh03 \
+                        -Dsonar.sources=. \
+                        -Dsonar.host.url=https://sonarcloud.io \
+                        -Dsonar.login=${SONAR_TOKEN}
+                    """
                 }
             }
         }
