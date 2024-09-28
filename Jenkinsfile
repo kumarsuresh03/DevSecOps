@@ -1,5 +1,5 @@
 pipeline {
-    agent any // This sets up an agent for the entire pipeline
+    agent any // Use any available agent
     
     environment {
         DOCKERHUB_CREDENTIALS = credentials('dockerhub-credentials')
@@ -9,10 +9,7 @@ pipeline {
     stages {
         stage('Checkout Code') {
             steps {
-                script {
-                    // Checkout code from Git repository
-                    git branch: 'master', url: 'https://github.com/kumarsuresh03/DevSecOps.git'
-                }
+                checkout scm // Use the SCM defined in Jenkins
             }
         }
 
@@ -53,8 +50,7 @@ pipeline {
 
     post {
         always {
-            // Clean up the workspace after the pipeline runs
-            cleanWs()
+            cleanWs() // Clean workspace after the pipeline runs
         }
     }
 }
