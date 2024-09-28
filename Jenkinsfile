@@ -12,17 +12,11 @@ pipeline {
             }
         }
 
-       stage('SonarCloud Analysis') {
+        stage('SonarCloud Analysis') {
             steps {
                 withSonarQubeEnv('SonarCloud') {
-                    sh """
-                        sonar-scanner \
-                        -Dsonar.projectKey=kumarsuresh03_CA3 \
-                        -Dsonar.organization=kumarsuresh03 \
-                        -Dsonar.sources=. \
-                        -Dsonar.host.url=https://sonarcloud.io \
-                        -Dsonar.login=${SONAR_TOKEN}
-                    """
+                    // Use a single line sh step to avoid string interpolation
+                    sh "sonar-scanner -Dsonar.projectKey=kumarsuresh03_CA3 -Dsonar.organization=kumarsuresh03 -Dsonar.sources=. -Dsonar.host.url=https://sonarcloud.io -Dsonar.login=${env.SONAR_TOKEN}"
                 }
             }
         }
